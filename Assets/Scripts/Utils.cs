@@ -25,4 +25,17 @@ public static class Utils
 
         return a > 0f && a < 1f && b > 0f && b < 1f && c > 0f && c < 1f;
     }
+
+    public static bool SegmentsIntersect(Vector2 start_1, Vector2 end_1, Vector2 start_2, Vector2 end_2)
+    {
+        Vector2 segment_1 = end_1 - start_1;
+        Vector2 segment_2 = end_2 - start_2;
+
+        float cache = -segment_2.x * segment_1.y + segment_1.x * segment_2.y;
+
+        float s = (-segment_1.y * (start_1.x - start_2.x) + segment_1.x * (start_1.y - start_2.y)) / cache;
+        float t = (segment_2.x * (start_1.y - start_2.y) - segment_2.y * (start_1.x - start_2.x)) / cache;
+
+        return 0 < t && t < 1 && 0 < s && s < 1;
+    }
 }

@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapFilePath: map.xml
+  maxContinuousLoadingTimeMilis: 500
   material: {fileID: 2100000, guid: ed18efe0f3339439c854736099d201c5, type: 2}
 --- !u!4 &21682704
 Transform:

@@ -1,6 +1,6 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Xml;
 using UnityEngine;
 using UnityEngine.Windows;
@@ -8,6 +8,7 @@ using UnityEngine.Windows;
 public class MapController : MonoBehaviour
 {
     [SerializeField] private string mapFilePath;
+    public int maxContinuousLoadingTimeMilis = 25;
     public Material material;
 
 
@@ -19,10 +20,16 @@ public class MapController : MonoBehaviour
 
     void Start()
     {
+        StartCoroutine(LoadMap()); 
+    }
+
+
+    public IEnumerator LoadMap()
+    {
         if (!File.Exists(Application.dataPath + "/" + mapFilePath))
         {
             Debug.LogError("Map file does not exist");
-            return;
+            yield break;
         }
 
         double start = Time.realtimeSinceStartupAsDouble;
@@ -47,6 +54,8 @@ public class MapController : MonoBehaviour
 
         // loading all nodes
         XmlNodeList nodeList = mapXml.SelectNodes("descendant::node");
+        
+        double breakTimer = Time.realtimeSinceStartup;
 
         foreach (XmlNode nodeTag in nodeList)
         {
@@ -67,7 +76,17 @@ public class MapController : MonoBehaviour
 
             Node node = new(latitude, longitude, nodeID, type);
             nodes.Add(nodeID, node);
+
+
+            if((Time.realtimeSinceStartup - breakTimer) * 1000 >= maxContinuousLoadingTimeMilis)
+            {
+                Debug.Log("taking a break");
+                breakTimer = Time.realtimeSinceStartup;
+                yield return null;
+            }
         }
+        Debug.Log("Loaded nodes");
+        Debug.Log("Building loading");
 
 
         // loading all building
@@ -77,9 +96,9 @@ public class MapController : MonoBehaviour
         foreach (XmlNode buildingNode in buildingsNodes)
         {
             long id = Convert.ToInt64(buildingNode.Attributes.GetNamedItem("id").Value);
-            Building building = new(id, material);
 
             // find perimeter
+            List<Node> buildingPerimeter = new();
             XmlNodeList perimeterNodes = buildingNode.SelectNodes("descendant::nd");
             foreach (XmlNode nodeReference in perimeterNodes)
             {
@@ -89,19 +108,28 @@ public class MapController : MonoBehaviour
                     continue;
 
                 Node node = nodes[nodeId];
-                building.perimeter.Add(node);
+                buildingPerimeter.Add(node);
             }
 
             // find height
+            int levels = 1;
             XmlNode buildingLevelNode = buildingNode.SelectSingleNode("descendant::tag[@k='building:levels']");
             if (buildingLevelNode != null)
             {
                 int buildingLevels = Convert.ToInt32(buildingLevelNode.Attributes.GetNamedItem("v").Value);
-                building.levels = buildingLevels;
+                levels = buildingLevels;
             }
 
-            building.UpdateMesh(worldOffset);
+            Building building = new(id, material, this.transform, buildingPerimeter, levels, worldOffset);
             buildings.Add(id, building);
+        
+            
+            if((Time.realtimeSinceStartup - breakTimer) * 1000 >= maxContinuousLoadingTimeMilis)
+            {
+                Debug.Log("taking a break");
+                breakTimer = Time.realtimeSinceStartup;
+                yield return null;
+            }
         }
 
         // loading all roads
@@ -132,11 +160,21 @@ public class MapController : MonoBehaviour
             }
 
             roads.Add(id, road);
+
+
+            if((Time.realtimeSinceStartup - breakTimer) * 1000 >= maxContinuousLoadingTimeMilis)
+            {
+                Debug.Log("taking a break");
+                breakTimer = Time.realtimeSinceStartup;
+                yield return null;
+            }
         }
 
 
         Debug.LogFormat("Processed {0} nodes in {1}ms ({2}s)", nodeList.Count, (Time.realtimeSinceStartupAsDouble - start) * 1000, Time.realtimeSinceStartupAsDouble - start);
         Debug.Log("Map loaded");
+
+        yield break;
     }
 
     // Update is called once per frame
@@ -185,7 +223,7 @@ public class MapController : MonoBehaviour
                 Gizmos.DrawLine(a, b);
             }
 
-            Gizmos.DrawSphere(building.center, 0.1f);
+            Gizmos.DrawSphere(building.buildingCenter, 0.1f);
         }
 
         foreach (Road road in roads.Values)
