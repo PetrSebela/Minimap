@@ -6,25 +6,28 @@ using UnityEngine;
 
 public class MapDataProcessor
 {
-    Dictionary<long, Node> nodes = new();
-    Dictionary<long, Building> buildings = new();
-    Dictionary<long, Road> roads = new();
-
-    Dictionary<Vector3, Chunk> chunkDictionary;
-    Material defaultMaterial;
+    MapSettings mapSettings;
+    GlobalMapData globalMapData;
     Vector3 worldOrigin;
 
-    public MapDataProcessor(Dictionary<Vector3, Chunk> targetDictionary, Material defaultMaterial, Vector3 worldOrigin)
+    public MapDataProcessor(GlobalMapData globalMapData, MapSettings mapSettings)
     {
-        chunkDictionary = targetDictionary;
-        this.defaultMaterial = defaultMaterial;
-        this.worldOrigin = worldOrigin;
+        this.globalMapData = globalMapData;
+        this.mapSettings = mapSettings;
+        this.worldOrigin = mapSettings.worldOrigin;
     }
     
     public void LoadData(XmlNode root)
     {
-        LoadNodes(root);
-        LoadBuildings(root);
+        Chunk.LoadAllStoredChunks(globalMapData, mapSettings);
+        
+        
+        // LoadNodes(root);
+        // LoadBuildings(root);
+
+
+        // foreach(Chunk chunk in globalMapData.chunkDictionary.Values)
+        //     chunk.Serialize();
     }
 
     private void LoadNodes(XmlNode root)
@@ -38,7 +41,9 @@ public class MapDataProcessor
 
             NodeType type = NodeType.Generic;
             Node node = new(latitude, longitude, id, type);
-            nodes.Add(id, node);
+            Chunk chunk = GetChunk(node.GetRawPoint());
+            chunk.nodes.Add(node);
+            globalMapData.nodes.Add(id, node);
         }
     }
 
@@ -57,31 +62,34 @@ public class MapDataProcessor
                 globalCenter += node.GetRawPoint();
             globalCenter /= buildingPerimeter.Count;
 
-            GameObject chunkObject = GetChunk(globalCenter).gameObject;
+
+            Chunk chunk = GetChunk(globalCenter);
+            GameObject chunkObject = chunk.gameObject;
 
             int levels = GetBuildingLevels(buildingNode);            
 
-            Building building = new(id, defaultMaterial, chunkObject.transform, buildingPerimeter, levels, worldOrigin);
-            buildings.Add(id, building);
+            Building building = new(id, mapSettings.buildingMaterial, chunkObject.transform, buildingPerimeter, levels, worldOrigin);
+            chunk.buildings.Add(building);
+            globalMapData.buildings.Add(id, building);
         }
     }
 
     private Chunk GetChunk(Vector3 position)
     {
         Vector3 chunkKey = new(
-            Mathf.Round(position.x / 100),
+            Mathf.Round(position.x / 100) * 100,
             0,
-            Mathf.Round(position.z / 100)
+            Mathf.Round(position.z / 100) * 100
         );
 
         Chunk chunk;
-        if (chunkDictionary.ContainsKey(chunkKey))
-            chunk = chunkDictionary[chunkKey];
+        if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
+            chunk = globalMapData.chunkDictionary[chunkKey];
         else
         {
-            Vector3 chunkOrigin = chunkKey * 100 - worldOrigin;
+            Vector3 chunkOrigin = chunkKey - worldOrigin;
             chunk = new(chunkOrigin);
-            chunkDictionary.Add(chunkKey, chunk);                
+            globalMapData.chunkDictionary.Add(chunkKey, chunk);                
         }
         return chunk;
     }
@@ -106,13 +114,26 @@ public class MapDataProcessor
         {
             long nodeId = Convert.ToInt64(nodeReference.Attributes.GetNamedItem("ref").Value);
 
-            if (!nodes.ContainsKey(nodeId))
+            if (!globalMapData.nodes.ContainsKey(nodeId))
                 continue;
 
-            Node node = nodes[nodeId];
+            Node node = globalMapData.nodes[nodeId];
             perimeter.Add(node);
         }
 
         return perimeter;
+    }
+}
+
+
+public struct MapSettings
+{
+    public Vector3 worldOrigin;
+    public Material buildingMaterial;
+
+    public MapSettings(Vector3 worldOrigin, Material buildingMaterial)
+    {
+        this.worldOrigin = worldOrigin;
+        this.buildingMaterial = buildingMaterial;
     }
 }

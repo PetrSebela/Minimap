@@ -25,3 +25,11 @@ Converted objects which are going to be renderer are then organised into chunks 
 # Cashing
 1. Download said area (chunk)
 2. Convert
+
+
+# Open Street Map xml
+## Nodes
+## Ways
+### Buildings
+- perimeter is enclosed by default, no need to create closed perimeter
+## Relations

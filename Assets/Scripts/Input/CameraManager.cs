@@ -96,9 +96,4 @@ public class CameraManager : MonoBehaviour
     {
         // canPan = false;
     }
-
-    void OnDrawGizmos()
-    {
-        Gizmos.DrawLine(cameraHolder.position, cameraHolder.position + cameraHolder.forward * 10);
-    }
 }

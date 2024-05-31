@@ -24,7 +24,8 @@ public class Building
 
     private static readonly int[] quarOrder = { 0, 2, 1, 1, 2, 3 };
     private static readonly int[] triangleOrder = { 0, 2, 1 };
-
+   
+    private BuildingStruct buildingStruct;
 
     public Building(long id, Material defaultMaterial, Transform parent, List<Node> perimeter, int levels, Vector3 origin)
     {
@@ -47,6 +48,16 @@ public class Building
         this.levels = levels;
         this.buildingCenter = GetBuildingCenter(origin);
         this.gameObject.transform.position = this.buildingCenter;
+
+
+        List<NodeStruct> localNodes = new();
+        foreach (Node node in perimeter)
+        {
+            NodeStruct nodeStruct = node.GetStruct();
+            localNodes.Add(nodeStruct);
+        }
+
+        buildingStruct = new(id, localNodes, levels);
         UpdateMesh(origin);
     }
     // Update is called once per frame
@@ -55,6 +66,11 @@ public class Building
         Gizmos.color = color;
         foreach (Node node in this.perimeter)
             node.DrawGizmo(origin, representedColor, size);
+    }
+
+    public BuildingStruct GetStruct()
+    {
+        return this.buildingStruct;
     }
 
     public Vector3 GetBuildingCenter(Vector3 origin)
@@ -178,5 +194,20 @@ public class Building
         mesh.vertices = vertices.ToArray();
         mesh.triangles = indices.ToArray();
         mesh.RecalculateNormals();
+    }
+}
+
+
+public struct BuildingStruct
+{
+    public long buildingID;
+    public List<NodeStruct> perimeter;
+    public int levels;
+
+    public BuildingStruct(long buildingID, List<NodeStruct> perimeter, int levels)
+    {
+        this.buildingID = buildingID;
+        this.perimeter = perimeter;
+        this.levels = levels;
     }
 }
