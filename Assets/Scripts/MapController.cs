@@ -1,9 +1,9 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
 using UnityEngine;
-using UnityEngine.Windows;
 
 public class MapController : MonoBehaviour
 {
@@ -16,17 +16,52 @@ public class MapController : MonoBehaviour
     Dictionary<long, Building> buildings = new();
     Dictionary<long, Road> roads = new();
 
+    Dictionary<Vector3, Chunk> chunkDictionary = new();
+
     Vector3 worldOffset;
 
     void Start()
     {
-        StartCoroutine(LoadMap()); 
+        // StartCoroutine(LoadMap()); 
+        LoadTest();
     }
 
 
+    public void LoadTest()
+    {
+        Debug.Log("Starting map loading");
+        double start = Time.realtimeSinceStartupAsDouble;
+
+        if (!System.IO.File.Exists(Application.dataPath + "/" + mapFilePath))
+        {
+            Debug.LogError("Map file does not exist");
+            return;
+        }
+
+        // load xml map data
+        XmlDocument mapXml = new();
+        mapXml.Load(Application.dataPath + "/" + mapFilePath);
+        XmlNode root = mapXml.DocumentElement;
+
+        // map boundaries
+        XmlNode bound = root.SelectSingleNode("descendant::bounds");
+        double minLat = Convert.ToDouble(bound.Attributes.GetNamedItem("minlat").Value);
+        double minLon = Convert.ToDouble(bound.Attributes.GetNamedItem("minlon").Value);
+        double maxLat = Convert.ToDouble(bound.Attributes.GetNamedItem("maxlat").Value);
+        double maxLon = Convert.ToDouble(bound.Attributes.GetNamedItem("maxlon").Value);
+
+        // map center
+        Vector3 destination = Geo.SphericalToCartesian(maxLat, maxLon);
+        Vector3 origin = Geo.SphericalToCartesian(minLat, minLon);
+        worldOffset =  origin + (destination - origin) / 2;
+
+        MapDataProcessor processor = new(chunkDictionary, material, worldOffset);
+        processor.LoadData(root);
+    }
+
     public IEnumerator LoadMap()
     {
-        if (!File.Exists(Application.dataPath + "/" + mapFilePath))
+        if (!System.IO.File.Exists(Application.dataPath + "/" + mapFilePath))
         {
             Debug.LogError("Map file does not exist");
             yield break;
@@ -180,6 +215,11 @@ public class MapController : MonoBehaviour
     // Update is called once per frame
     void OnDrawGizmos()
     {
+
+        foreach(Chunk chunk in chunkDictionary.Values)
+            chunk.DrawGizmos();
+
+
         if (nodes == null)
             return;
 
