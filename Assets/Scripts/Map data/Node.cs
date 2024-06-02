@@ -13,15 +13,33 @@ public class Node
 
     private NodeStruct nodeStruct;
 
-    public Node(double latitude, double longitude, long nodeID, NodeType type)
+    public Node(NodeStruct nodeStruct, GlobalMapData globalMapData, MapSettings mapSettings)
     {
-        this.position = Geo.SphericalToCartesian(latitude, longitude);
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.nodeID = nodeID;
-        this.type = type;
+        this.position = Geo.SphericalToCartesian(nodeStruct.latitude, nodeStruct.longitude);
+        this.latitude = nodeStruct.latitude;
+        this.longitude = nodeStruct.longitude;
+        this.nodeID = nodeStruct.nodeID;
+        this.type = nodeStruct.nodeType;
+        this.nodeStruct = nodeStruct;
 
-        nodeStruct = new(latitude, longitude, nodeID, type);
+
+        Vector3 planePosition = GetPointWithOffset(mapSettings.worldOrigin);
+        Vector3 chunkKey = new (
+            Mathf.Round(planePosition.x / mapSettings.chunkSize) * mapSettings.chunkSize,
+            0,
+            Mathf.Round(planePosition.z / mapSettings.chunkSize) * mapSettings.chunkSize
+        );
+
+        Chunk parentChunk;
+        if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
+            parentChunk = globalMapData.chunkDictionary[chunkKey];
+        else
+        {
+            parentChunk = new(chunkKey, globalMapData, mapSettings);
+            globalMapData.chunkDictionary.Add(chunkKey, parentChunk);
+        }
+
+        parentChunk.nodes.Add(this);
     }
 
     public Vector3 GetPointWithOffset(Vector3 origin)

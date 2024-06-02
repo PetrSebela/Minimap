@@ -155,6 +155,11 @@ MonoBehaviour:
   mapFilePath: map.xml
   maxContinuousLoadingTimeMilis: 500
   material: {fileID: 2100000, guid: ed18efe0f3339439c854736099d201c5, type: 2}
+  worldOriginCoordinates:
+    latitude: 49.2264482
+    longitude: 16.5953301
+  chunkRenderDistance: 4
+  mapLoadTarget: {fileID: 1182929565}
 --- !u!4 &21682704
 Transform:
   m_ObjectHideFlags: 0

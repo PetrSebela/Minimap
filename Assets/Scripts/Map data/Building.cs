@@ -27,39 +27,57 @@ public class Building
    
     private BuildingStruct buildingStruct;
 
-    public Building(long id, Material defaultMaterial, Transform parent, List<Node> perimeter, int levels, Vector3 origin)
+    public Building(BuildingStruct buildingStruct, GlobalMapData globalMapData, MapSettings mapSettings)
     {
-        this.id = id;
+        id = buildingStruct.buildingID;
 
-        this.representedColor = new(
+        representedColor = new(
             (float)Random.Range(0, 255) / 255,
             (float)Random.Range(0, 255) / 255,
             (float)Random.Range(0, 255) / 255
         );
 
-        gameObject = new(id.ToString());
-        gameObject.transform.SetParent(parent);
+        // gameobject setup
+        gameObject = new(buildingStruct.buildingID.ToString());
         meshFilter = gameObject.AddComponent<MeshFilter>();
         mesh = meshFilter.mesh;
         meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        meshRenderer.material = defaultMaterial;
+        meshRenderer.material = mapSettings.buildingMaterial;
 
-        this.perimeter = perimeter;
-        this.levels = levels;
-        this.buildingCenter = GetBuildingCenter(origin);
-        this.gameObject.transform.position = this.buildingCenter;
-
-
-        List<NodeStruct> localNodes = new();
-        foreach (Node node in perimeter)
+        // generic data
+        foreach (NodeStruct nodeStruct in buildingStruct.perimeter)
         {
-            NodeStruct nodeStruct = node.GetStruct();
-            localNodes.Add(nodeStruct);
+            if(!globalMapData.nodes.ContainsKey(nodeStruct.nodeID))
+                continue;
+
+            Node node = globalMapData.nodes[nodeStruct.nodeID];
+            perimeter.Add(node);            
+        }
+        levels = buildingStruct.levels;
+        buildingCenter = GetBuildingCenter(mapSettings.worldOrigin);
+        gameObject.transform.position = buildingCenter;
+
+        // get chunk
+        Vector3 chunkKey = new (
+            Mathf.Round(buildingCenter.x / mapSettings.chunkSize) * mapSettings.chunkSize,
+            0,
+            Mathf.Round(buildingCenter.z / mapSettings.chunkSize) * mapSettings.chunkSize
+        );
+
+        Chunk parentChunk;
+        if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
+            parentChunk = globalMapData.chunkDictionary[chunkKey];
+        else
+        {
+            parentChunk = new(chunkKey, globalMapData, mapSettings);
+            globalMapData.chunkDictionary.Add(chunkKey, parentChunk);
         }
 
-        buildingStruct = new(id, localNodes, levels);
-        UpdateMesh(origin);
+        gameObject.transform.SetParent(parentChunk.gameObject.transform);
+        parentChunk.buildings.Add(this);
+        UpdateMesh(mapSettings.worldOrigin);
     }
+
     // Update is called once per frame
     public void DrawGizmo(Vector3 origin, Color color, float size = 0.1f)
     {

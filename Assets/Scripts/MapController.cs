@@ -1,29 +1,85 @@
-using System;
-using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
 using UnityEngine;
+using System.Threading;
+using System.Collections;
 
 public class MapController : MonoBehaviour
 {
     [SerializeField] private string mapFilePath;
-    public int maxContinuousLoadingTimeMilis = 25;
     public Material material;
 
-
+    // map data
     Dictionary<long, Node> nodes = new();
     Dictionary<long, Building> buildings = new();
     Dictionary<long, Road> roads = new();
     Dictionary<Vector3, Chunk> chunkDictionary = new();
 
-    Vector3 worldOffset;
+
+    Vector3 worldOrigin;
+
+    // Tree at VUT FIT
+    // latitude = 49.2264482;
+    // longitude = 16.5953301;
+    [SerializeField] Coordinates worldOriginCoordinates;
+
+
+
+
+    // map settings
+    MapSettings mapSettings;
+    GlobalMapData globalMapData;
+
+
+    // Dynamic map loading 
+    const float chunkSize = 250.0f; //! clear cashe if you change this number
+    const int chunksInArea = 50;
+    Queue<string> xmlMapDataQueue = new();
+
+    float areaSize;
+    XmlProcessor processor;
 
     void Start()
     {
-        LoadTest();
+        worldOrigin = Geo.SphericalToCartesian(worldOriginCoordinates.latitude, worldOriginCoordinates.longitude);
+
+        mapSettings = new(worldOrigin, material, chunkSize, chunksInArea);
+        globalMapData = new(nodes, buildings, roads, chunkDictionary);
+        areaSize = chunksInArea * chunkSize;
+        processor = new(globalMapData, mapSettings);
+
+        AreaData loaderData = new(worldOrigin - new Vector3(areaSize / 2, 0, areaSize / 2), areaSize, xmlMapDataQueue);
+        ThreadPool.QueueUserWorkItem(ChunkLoader.AreaLoader, loaderData);
     }
 
+    void FixedUpdate()
+    {
+        ProcessXmlMapData();
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.white;
+        foreach (Chunk chunk in chunkDictionary.Values)
+            chunk.DrawGizmos();
+    }
+
+    public void ProcessXmlMapData()
+    {
+
+        string mapData;
+        lock (xmlMapDataQueue)
+        {
+            if(xmlMapDataQueue.Count <= 0)
+                return;
+            mapData = xmlMapDataQueue.Dequeue();
+        }
+        Debug.Log("Processing data");
+        XmlDocument mapXml = new();
+        mapXml.LoadXml(mapData);
+        XmlNode root = mapXml.DocumentElement;
+        StartCoroutine(processor.LoadData(root));
+    }
 
     public void LoadTest()
     {
@@ -41,28 +97,34 @@ public class MapController : MonoBehaviour
         mapXml.Load(Application.dataPath + "/" + mapFilePath);
         XmlNode root = mapXml.DocumentElement;
 
-        // map boundaries
-        XmlNode bound = root.SelectSingleNode("descendant::bounds");
-        double minLat = Convert.ToDouble(bound.Attributes.GetNamedItem("minlat").Value);
-        double minLon = Convert.ToDouble(bound.Attributes.GetNamedItem("minlon").Value);
-        double maxLat = Convert.ToDouble(bound.Attributes.GetNamedItem("maxlat").Value);
-        double maxLon = Convert.ToDouble(bound.Attributes.GetNamedItem("maxlon").Value);
-
-        // map center
-        Vector3 destination = Geo.SphericalToCartesian(maxLat, maxLon);
-        Vector3 origin = Geo.SphericalToCartesian(minLat, minLon);
-        worldOffset =  origin + (destination - origin) / 2;
-
-        MapSettings mapSettings = new(worldOffset, material);
+        MapSettings mapSettings = new(worldOrigin, material, chunkSize, chunksInArea);
         GlobalMapData globalMapData = new(nodes, buildings, roads, chunkDictionary);
 
-
-        MapDataProcessor processor = new(globalMapData, mapSettings);
+        XmlProcessor processor = new(globalMapData, mapSettings);
         processor.LoadData(root);
 
         Debug.LogFormat("Finished initial loading in {0}s", Time.realtimeSinceStartupAsDouble - startTime);
     }
 }
+
+
+
+public struct MapSettings
+{
+    public Vector3 worldOrigin;
+    public Material buildingMaterial;
+    public float chunkSize;
+    public int chunksInArea;
+
+    public MapSettings(Vector3 worldOrigin, Material buildingMaterial, float chunkSize, int chunksInArea)
+    {
+        this.worldOrigin = worldOrigin;
+        this.buildingMaterial = buildingMaterial;
+        this.chunkSize = chunkSize;
+        this.chunksInArea = chunksInArea;
+    }
+}
+
 
 public struct GlobalMapData
 {

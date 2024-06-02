@@ -19,17 +19,13 @@ Converted objects which are going to be renderer are then organised into chunks 
 - list of nodes (single point data structures such as trees and lamps)
 - list of buildings
 
-
-*Depending on future of this project, I might need to switch to something like quad-tree data structure to handle displaying larger amounts of data at once*
-
-# Cashing
-1. Download said area (chunk)
-2. Convert
-
-
 # Open Street Map xml
 ## Nodes
 ## Ways
 ### Buildings
 - perimeter is enclosed by default, no need to create closed perimeter
 ## Relations
+
+
+# Dynamic map loading and serialisation
+if chunk is not stored in cache then api request is made, api response is then processed and new chunk is serialised and saved into cache

@@ -29,6 +29,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=Unity.VisualScripting.State;
 --assembly-defines=Unity.VisualScripting.Antlr3.Runtime;
 --assembly-defines=Unity.Burst.Unsafe;
+--assembly-defines=Newtonsoft.Json;
 --assembly-defines=System.Runtime;
 --assembly-defines=netstandard;
 --assembly-defines=Mono.Security;
@@ -53,6 +54,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=mscorlib;
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/home/petr/Projects/Minimap/Temp/Burst
+--debug=Full
 --key-folder=/home/petr/Unity/Hub/Editor/2022.3.22f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport
 --decode-folder=/home/petr/Projects/Minimap/Library/Burst
 --output=/home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_generated
@@ -90,6 +92,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=Unity.VisualScripting.State;
 --assembly-defines=Unity.VisualScripting.Antlr3.Runtime;
 --assembly-defines=Unity.Burst.Unsafe;
+--assembly-defines=Newtonsoft.Json;
 --assembly-defines=System.Runtime;
 --assembly-defines=netstandard;
 --assembly-defines=Mono.Security;
@@ -114,6 +117,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=mscorlib;
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/home/petr/Projects/Minimap/Temp/Burst
+--debug=Full
 --key-folder=/home/petr/Unity/Hub/Editor/2022.3.22f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport
 --decode-folder=/home/petr/Projects/Minimap/Library/Burst
 --output=/home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_generated
@@ -149,6 +153,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=Unity.VisualScripting.State;
 --assembly-defines=Unity.VisualScripting.Antlr3.Runtime;
 --assembly-defines=Unity.Burst.Unsafe;
+--assembly-defines=Newtonsoft.Json;
 --assembly-defines=System.Runtime;
 --assembly-defines=netstandard;
 --assembly-defines=Mono.Security;
@@ -173,6 +178,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=mscorlib;
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/home/petr/Projects/Minimap/Temp/Burst
+--debug=Full
 --key-folder=/home/petr/Unity/Hub/Editor/2022.3.22f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport
 --decode-folder=/home/petr/Projects/Minimap/Library/Burst
 --output=/home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_generated
@@ -214,6 +220,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=Unity.VisualScripting.State;
 --assembly-defines=Unity.VisualScripting.Antlr3.Runtime;
 --assembly-defines=Unity.Burst.Unsafe;
+--assembly-defines=Newtonsoft.Json;
 --assembly-defines=System.Runtime;
 --assembly-defines=netstandard;
 --assembly-defines=Mono.Security;
@@ -238,6 +245,7 @@ Library: /home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_gen
 --assembly-defines=mscorlib;
 --generate-link-xml=Temp/burst.link.xml
 --temp-folder=/home/petr/Projects/Minimap/Temp/Burst
+--debug=Full
 --key-folder=/home/petr/Unity/Hub/Editor/2022.3.22f1/Editor/Data/PlaybackEngines/LinuxStandaloneSupport
 --decode-folder=/home/petr/Projects/Minimap/Library/Burst
 --output=/home/petr/Projects/Minimap/Temp/BurstOutput/Data/Plugins/lib_burst_generated
