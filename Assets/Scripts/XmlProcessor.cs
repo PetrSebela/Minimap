@@ -31,27 +31,26 @@ public class XmlProcessor
         }
 
         yield return null;
-        List<BuildingStruct> areaBuildings = LoadBuildings(root, nsd);
+        List<BuildingStruct> areaBuildings = LoadBuildings(root, nsd); 
         
-        // move upper part to separate threads
+        // move all code above onto separate thread
         
         int breakCounter = 0; 
+        
+        HashSet<Chunk> effectedChunks = new();
 
         // injecting nodes
         foreach (NodeStruct nodeStruct in areaNodes)
         {
             if (globalMapData.nodes.ContainsKey(nodeStruct.nodeID))
                 continue;
-            
+
             Node node = new(nodeStruct, globalMapData, mapSettings);
             globalMapData.nodes.Add(nodeStruct.nodeID, node);
-            
+            effectedChunks.Add(node.GetParentChunk());
             breakCounter++;
             if (breakCounter % 1000 == 0)
-            {
-                Debug.Log(breakCounter);
                 yield return null;
-            }
         }
 
         // injecting buildings
@@ -62,13 +61,16 @@ public class XmlProcessor
             
             Building building = new(buildingStruct, globalMapData, mapSettings);
             globalMapData.buildings.Add(buildingStruct.buildingID, building);
+            effectedChunks.Add(building.GetParentChunk());
+
             breakCounter++;
             if (breakCounter % 100 == 0)
-            {
-                Debug.Log(breakCounter);
                 yield return null;
-            }
         }
+
+
+        foreach (Chunk chunk in effectedChunks)
+            chunk.Serialize();
     }
 
     private List<NodeStruct> GetNodes(XmlNode root)
@@ -82,7 +84,7 @@ public class XmlProcessor
             double latitude = Convert.ToDouble(nodeTag.Attributes.GetNamedItem("lat").Value);
             double longitude = Convert.ToDouble(nodeTag.Attributes.GetNamedItem("lon").Value);
 
-            NodeType type = NodeType.Generic;
+            NodeType type = GetNodeType(nodeTag);
             NodeStruct nodeStruct = new(latitude, longitude, id, type);
 
             nodeStructs.Add(nodeStruct);
@@ -90,6 +92,30 @@ public class XmlProcessor
         Debug.Log("Loading node structs completed");
 
         return nodeStructs;
+    }
+
+    private NodeType GetNodeType(XmlNode root)
+    {
+        NodeType nodeType = NodeType.Generic;
+
+        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='surveillance']"))
+            nodeType = NodeType.Surveillance;
+        
+        if (null != root.SelectSingleNode("descendant::tag[@k='highway' and @v='street_lamp']"))
+            nodeType = NodeType.Lamp;
+
+        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='chimney']"))
+            nodeType = NodeType.Chimney;
+
+        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='cooling_tower']"))
+            nodeType = NodeType.CoolingTower;
+        
+        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='communications_tower']"))
+            nodeType = NodeType.CommunicationsTower;
+        
+        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='antenna']"))
+            nodeType = NodeType.Antenna;
+        return nodeType;
     }
 
     private List<BuildingStruct> LoadBuildings(XmlNode root, Dictionary<long, NodeStruct> nsd)
@@ -115,8 +141,6 @@ public class XmlProcessor
             int levels = GetBuildingLevels(buildingNode);            
             BuildingStruct buildingStruct = new(id, perimeter, levels);
             buildingStructs.Add(buildingStruct);
-
-            Debug.Log("Loading building structs completed");
         }
         return buildingStructs;
     }

@@ -26,10 +26,12 @@ public class Building
     private static readonly int[] triangleOrder = { 0, 2, 1 };
    
     private BuildingStruct buildingStruct;
+    private Chunk parentChunk;
 
     public Building(BuildingStruct buildingStruct, GlobalMapData globalMapData, MapSettings mapSettings)
     {
         id = buildingStruct.buildingID;
+        this.buildingStruct = buildingStruct;
 
         representedColor = new(
             (float)Random.Range(0, 255) / 255,
@@ -64,7 +66,7 @@ public class Building
             Mathf.Round(buildingCenter.z / mapSettings.chunkSize) * mapSettings.chunkSize
         );
 
-        Chunk parentChunk;
+       
         if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
             parentChunk = globalMapData.chunkDictionary[chunkKey];
         else
@@ -78,12 +80,9 @@ public class Building
         UpdateMesh(mapSettings.worldOrigin);
     }
 
-    // Update is called once per frame
-    public void DrawGizmo(Vector3 origin, Color color, float size = 0.1f)
+    public Chunk GetParentChunk()
     {
-        Gizmos.color = color;
-        foreach (Node node in this.perimeter)
-            node.DrawGizmo(origin, representedColor, size);
+        return parentChunk;
     }
 
     public BuildingStruct GetStruct()

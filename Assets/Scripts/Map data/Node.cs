@@ -10,18 +10,25 @@ public class Node
     double latitude;
     double longitude;
     public NodeType type;
+    private Chunk parentChunk;
 
     private NodeStruct nodeStruct;
+    // GameObject gameObject;
+    Color gizmoColor = Color.white;
+    bool hasGizmo = false;
+    MapSettings mapSettings;
+    GameObject gameObject;
 
     public Node(NodeStruct nodeStruct, GlobalMapData globalMapData, MapSettings mapSettings)
     {
         this.position = Geo.SphericalToCartesian(nodeStruct.latitude, nodeStruct.longitude);
+        
         this.latitude = nodeStruct.latitude;
         this.longitude = nodeStruct.longitude;
         this.nodeID = nodeStruct.nodeID;
         this.type = nodeStruct.nodeType;
         this.nodeStruct = nodeStruct;
-
+        this.mapSettings = mapSettings;
 
         Vector3 planePosition = GetPointWithOffset(mapSettings.worldOrigin);
         Vector3 chunkKey = new (
@@ -30,7 +37,7 @@ public class Node
             Mathf.Round(planePosition.z / mapSettings.chunkSize) * mapSettings.chunkSize
         );
 
-        Chunk parentChunk;
+        
         if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
             parentChunk = globalMapData.chunkDictionary[chunkKey];
         else
@@ -39,7 +46,31 @@ public class Node
             globalMapData.chunkDictionary.Add(chunkKey, parentChunk);
         }
 
+        if(type == NodeType.Surveillance)
+        {
+            gameObject = GameObject.Instantiate(mapSettings.tag);
+            gameObject.GetComponent<Billboard>().cameraTransform = mapSettings.billboardTransform;
+            gameObject.transform.position = GetPointWithOffset(mapSettings.worldOrigin);
+            gameObject.transform.parent = parentChunk.gameObject.transform;
+        }
+        
+
+        switch (type)
+        {
+            case NodeType.Surveillance:
+                hasGizmo = true;
+                gizmoColor = Color.red;
+                break;
+            default:
+                break;
+        }
+
         parentChunk.nodes.Add(this);
+    }
+
+    public Chunk GetParentChunk()
+    {
+        return parentChunk;
     }
 
     public Vector3 GetPointWithOffset(Vector3 origin)
@@ -47,20 +78,17 @@ public class Node
         return this.position - origin;
     }
 
-    public Vector3 GetRawPoint()
-    {
-        return this.position;
-    }
-
     public NodeStruct GetStruct()
     {
         return this.nodeStruct;
     }
 
-    public void DrawGizmo(Vector3 origin, Color color, float size = 0.1f)
+    public void DrawGizmo()
     {
-        Gizmos.color = color;
-        Gizmos.DrawSphere(this.position - origin, size);
+        if(!hasGizmo)
+            return;
+        Gizmos.color = gizmoColor;
+        Gizmos.DrawSphere(position - mapSettings.worldOrigin + new Vector3(0, 35, 0), 3.65f);
     }
 }
 
@@ -87,5 +115,10 @@ public enum NodeType
 {
     Generic,
     Lamp,
-    Tree
+    Tree,
+    Chimney,
+    CoolingTower,
+    CommunicationsTower,
+    Antenna,
+    Surveillance
 }

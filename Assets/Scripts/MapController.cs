@@ -33,23 +33,33 @@ public class MapController : MonoBehaviour
 
     // Dynamic map loading 
     const float chunkSize = 250.0f; //! clear cashe if you change this number
-    const int chunksInArea = 50;
+    const int chunksInArea = 15;
     Queue<string> xmlMapDataQueue = new();
 
     float areaSize;
-    XmlProcessor processor;
-
+    XmlProcessor xmlProcessor;
+    CacheProcessor cacheProcessor;
+    
+    //! test
+    public GameObject tag;
+    public Transform billboardTransform;
     void Start()
     {
         worldOrigin = Geo.SphericalToCartesian(worldOriginCoordinates.latitude, worldOriginCoordinates.longitude);
 
-        mapSettings = new(worldOrigin, material, chunkSize, chunksInArea);
+        mapSettings = new(worldOrigin, material, chunkSize, chunksInArea, tag, billboardTransform);
         globalMapData = new(nodes, buildings, roads, chunkDictionary);
         areaSize = chunksInArea * chunkSize;
-        processor = new(globalMapData, mapSettings);
+        xmlProcessor = new(globalMapData, mapSettings);
+        cacheProcessor = new(globalMapData, mapSettings);
 
-        AreaData loaderData = new(worldOrigin - new Vector3(areaSize / 2, 0, areaSize / 2), areaSize, xmlMapDataQueue);
-        ThreadPool.QueueUserWorkItem(ChunkLoader.AreaLoader, loaderData);
+        // load chunks from cache
+        cacheProcessor.LoadAllCachedChunks();
+
+        // load area from API 
+        // AreaData loaderData = new(worldOrigin - new Vector3(areaSize / 2, 0, areaSize / 2), areaSize, xmlMapDataQueue);
+        // ThreadPool.QueueUserWorkItem(ChunkLoader.AreaLoader, loaderData);
+
     }
 
     void FixedUpdate()
@@ -62,6 +72,9 @@ public class MapController : MonoBehaviour
         Gizmos.color = Color.white;
         foreach (Chunk chunk in chunkDictionary.Values)
             chunk.DrawGizmos();
+
+        foreach (Node node in nodes.Values)
+            node.DrawGizmo();
     }
 
     public void ProcessXmlMapData()
@@ -78,32 +91,7 @@ public class MapController : MonoBehaviour
         XmlDocument mapXml = new();
         mapXml.LoadXml(mapData);
         XmlNode root = mapXml.DocumentElement;
-        StartCoroutine(processor.LoadData(root));
-    }
-
-    public void LoadTest()
-    {
-        Debug.Log("Starting map loading");
-        double startTime = Time.realtimeSinceStartupAsDouble;
-
-        if (!System.IO.File.Exists(Application.dataPath + "/" + mapFilePath))
-        {
-            Debug.LogError("Map file does not exist");
-            return;
-        }
-
-        // load xml map data
-        XmlDocument mapXml = new();
-        mapXml.Load(Application.dataPath + "/" + mapFilePath);
-        XmlNode root = mapXml.DocumentElement;
-
-        MapSettings mapSettings = new(worldOrigin, material, chunkSize, chunksInArea);
-        GlobalMapData globalMapData = new(nodes, buildings, roads, chunkDictionary);
-
-        XmlProcessor processor = new(globalMapData, mapSettings);
-        processor.LoadData(root);
-
-        Debug.LogFormat("Finished initial loading in {0}s", Time.realtimeSinceStartupAsDouble - startTime);
+        StartCoroutine(xmlProcessor.LoadData(root));
     }
 }
 
@@ -115,13 +103,17 @@ public struct MapSettings
     public Material buildingMaterial;
     public float chunkSize;
     public int chunksInArea;
+    public GameObject tag;
+    public Transform billboardTransform;
 
-    public MapSettings(Vector3 worldOrigin, Material buildingMaterial, float chunkSize, int chunksInArea)
+    public MapSettings(Vector3 worldOrigin, Material buildingMaterial, float chunkSize, int chunksInArea, GameObject tag, Transform billboardTransform)
     {
         this.worldOrigin = worldOrigin;
         this.buildingMaterial = buildingMaterial;
         this.chunkSize = chunkSize;
         this.chunksInArea = chunksInArea;
+        this.tag = tag;
+        this.billboardTransform = billboardTransform;
     }
 }
 

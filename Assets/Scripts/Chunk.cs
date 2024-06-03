@@ -21,11 +21,11 @@ public class Chunk
     {
         gameObject = new(position.ToString());
         gameObject.transform.position = position;
+        gameObject.isStatic = true;
         this.position = position;
 
         this.globalMapData = globalMapData;
         this.mapSettings = mapSettings;
-        // Serialize();
     }
 
     public void Serialize()
@@ -39,9 +39,9 @@ public class Chunk
             if(!usedNodes.ContainsKey(nodeStruct.nodeID))
                 usedNodes.Add(nodeStruct.nodeID, nodeStruct);
         }
+
         foreach (Building building in buildings)
         {
-            List<NodeStruct> localNodes = new();
             foreach (Node node in building.perimeter)
             {
                 NodeStruct poiStruct = node.GetStruct();
@@ -59,7 +59,8 @@ public class Chunk
         ChunkStruct st = new(usedNodes, usedBuildings);
 
         string jsonString = JsonConvert.SerializeObject(st, Formatting.Indented);
-        string fileName = string.Format("{0}|{1}.mapdata", position.x, position.z);
+        int chunkCode = position.GetHashCode();
+        string fileName = string.Format("{0}.mapdata", chunkCode);
         StreamWriter outputFile = new(Path.Combine(Application.persistentDataPath, fileName));
         outputFile.WriteLine(jsonString);
         outputFile.Close();
