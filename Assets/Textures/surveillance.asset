@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d91c52cfa87fe2217beb61315f7b2440, type: 3}
+  m_Name: surveillance
+  m_EditorClassIdentifier: 
+  gameObject: {fileID: 2025944824315695006, guid: 309019dfd26ff25989985789fff1dfed,
+    type: 3}
+  localXpath: descendant::tag[@k='man_made' and @v='surveillance']
+  nodeType: 7

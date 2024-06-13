@@ -27,7 +27,7 @@ public static class ChunkLoader
         
         client.BaseAddress = new Uri(overpassURL);
         string request = string.Format(overpassAPI,chunkOrigin.longitude, chunkOrigin.latitude, chunkDestination.longitude, chunkDestination.latitude);
-        Debug.Log(request);
+
         HttpResponseMessage response = await client.GetAsync(request);  // Blocking call! Program will wait here until a response is received or a timeout occurs.
         if (response.IsSuccessStatusCode)
         {

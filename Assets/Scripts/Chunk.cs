@@ -32,6 +32,7 @@ public class Chunk
     {
         Dictionary<long, NodeStruct> usedNodes = new();
         Dictionary<long, BuildingStruct> usedBuildings = new();
+        Dictionary<long, RoadStruct> usedRoads = new();
 
         foreach (Node node in nodes)
         {
@@ -56,7 +57,23 @@ public class Chunk
                 usedBuildings.Add(bs.buildingID, bs);
         }
 
-        ChunkStruct st = new(usedNodes, usedBuildings);
+
+        foreach (Road road in roads)
+        {
+            foreach (Node node in road.nodes)
+            {
+                NodeStruct roadNode = node.GetStruct();
+                if (usedNodes.ContainsKey(roadNode.nodeID))
+                    continue;
+                usedNodes.Add(roadNode.nodeID, roadNode);
+            }
+            RoadStruct roadStruct = road.GetStruct();
+
+            if(!usedRoads.ContainsKey(roadStruct.roadID))
+                usedRoads.Add(roadStruct.roadID, roadStruct);
+        }
+
+        ChunkStruct st = new(usedNodes, usedBuildings, usedRoads);
 
         string jsonString = JsonConvert.SerializeObject(st, Formatting.Indented);
         int chunkCode = position.GetHashCode();
@@ -78,10 +95,12 @@ public struct ChunkStruct
 {
     public Dictionary<long, NodeStruct> usedNodes;
     public Dictionary<long, BuildingStruct> buildings;
+    public Dictionary<long, RoadStruct> roads;
 
-    public ChunkStruct(Dictionary<long, NodeStruct> usedNodes, Dictionary<long, BuildingStruct> buildings)
+    public ChunkStruct(Dictionary<long, NodeStruct> usedNodes, Dictionary<long, BuildingStruct> buildings, Dictionary<long, RoadStruct> roads)
     {
         this.usedNodes = usedNodes;
         this.buildings = buildings;
+        this.roads = roads;
     }
 }

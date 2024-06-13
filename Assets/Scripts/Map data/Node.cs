@@ -1,42 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class Node
 {
     Vector3 position;
     long nodeID;
-    double latitude;
-    double longitude;
+    Coordinates coordinates;
     public NodeType type;
     private Chunk parentChunk;
 
     private NodeStruct nodeStruct;
-    // GameObject gameObject;
-    Color gizmoColor = Color.white;
-    bool hasGizmo = false;
     MapSettings mapSettings;
+
     GameObject gameObject;
+    
+    public List<Building> usedByBuildings = new();
+    public List<Road> usedByRoads = new();
 
     public Node(NodeStruct nodeStruct, GlobalMapData globalMapData, MapSettings mapSettings)
     {
         this.position = Geo.SphericalToCartesian(nodeStruct.latitude, nodeStruct.longitude);
         
-        this.latitude = nodeStruct.latitude;
-        this.longitude = nodeStruct.longitude;
+        this.coordinates = new(nodeStruct.latitude, nodeStruct.longitude);
         this.nodeID = nodeStruct.nodeID;
         this.type = nodeStruct.nodeType;
         this.nodeStruct = nodeStruct;
         this.mapSettings = mapSettings;
 
         Vector3 planePosition = GetPointWithOffset(mapSettings.worldOrigin);
+
         Vector3 chunkKey = new (
             Mathf.Round(planePosition.x / mapSettings.chunkSize) * mapSettings.chunkSize,
             0,
             Mathf.Round(planePosition.z / mapSettings.chunkSize) * mapSettings.chunkSize
         );
-
         
         if (globalMapData.chunkDictionary.ContainsKey(chunkKey))
             parentChunk = globalMapData.chunkDictionary[chunkKey];
@@ -46,23 +46,16 @@ public class Node
             globalMapData.chunkDictionary.Add(chunkKey, parentChunk);
         }
 
-        if(type == NodeType.Surveillance)
+        foreach (Tag tag in mapSettings.tags)
         {
-            gameObject = GameObject.Instantiate(mapSettings.tag);
-            gameObject.GetComponent<Billboard>().cameraTransform = mapSettings.billboardTransform;
-            gameObject.transform.position = GetPointWithOffset(mapSettings.worldOrigin);
-            gameObject.transform.parent = parentChunk.gameObject.transform;
-        }
-        
-
-        switch (type)
-        {
-            case NodeType.Surveillance:
-                hasGizmo = true;
-                gizmoColor = Color.red;
+            if (type == tag.nodeType)
+            {
+                gameObject = GameObject.Instantiate(tag.gameObject);
+                gameObject.GetComponent<Billboard>().cameraTransform = mapSettings.billboardTarget;
+                gameObject.transform.position = GetPointWithOffset(mapSettings.worldOrigin);
+                gameObject.transform.parent = parentChunk.gameObject.transform;
                 break;
-            default:
-                break;
+            }
         }
 
         parentChunk.nodes.Add(this);
@@ -78,6 +71,11 @@ public class Node
         return this.position - origin;
     }
 
+    public Vector3 GetLocalizedPoint()
+    {
+        return this.position - mapSettings.worldOrigin;
+    }
+
     public NodeStruct GetStruct()
     {
         return this.nodeStruct;
@@ -85,10 +83,8 @@ public class Node
 
     public void DrawGizmo()
     {
-        if(!hasGizmo)
-            return;
-        Gizmos.color = gizmoColor;
-        Gizmos.DrawSphere(position - mapSettings.worldOrigin + new Vector3(0, 35, 0), 3.65f);
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(GetLocalizedPoint(), 1);
     }
 }
 

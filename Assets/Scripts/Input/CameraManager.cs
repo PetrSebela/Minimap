@@ -9,7 +9,7 @@ public class CameraManager : MonoBehaviour
     // Start is called before the first frame update
     [SerializeField] Transform cameraHolder;
     [SerializeField] Transform tiltAxis;
-    [SerializeField] Transform camera;
+    [SerializeField] Transform cameraTransform;
     Controls controls;
     Vector3 cameraVelocity = Vector3.zero;
     bool canPan = false;
@@ -20,7 +20,7 @@ public class CameraManager : MonoBehaviour
     void Update()
     {
         Vector2 mwDelta = Input.mouseScrollDelta;
-        camera.localPosition += new Vector3(0, 0, mwDelta.y * 10);
+        cameraTransform.localPosition += new Vector3(0, 0, mwDelta.y * 50);
         // Keeping velocity after user stop panning
         if (canPan)
             cameraHolder.position += cameraHolder.forward * cameraVelocity.z + cameraHolder.right * cameraVelocity.x;

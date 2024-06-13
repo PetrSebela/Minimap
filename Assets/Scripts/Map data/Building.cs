@@ -49,12 +49,11 @@ public class Building
         // generic data
         foreach (NodeStruct nodeStruct in buildingStruct.perimeter)
         {
-            if(!globalMapData.nodes.ContainsKey(nodeStruct.nodeID))
-                continue;
-
             Node node = globalMapData.nodes[nodeStruct.nodeID];
+            node.usedByBuildings.Add(this);
             perimeter.Add(node);            
         }
+        
         levels = buildingStruct.levels;
         buildingCenter = GetBuildingCenter(mapSettings.worldOrigin);
         gameObject.transform.position = buildingCenter;
@@ -118,28 +117,26 @@ public class Building
     public void UpdateMesh(Vector3 origin)
     {
         // normalize direction of points     
-        if (perimeter.Count < 2)
+        if (this.perimeter.Count < 2)
             return;
 
         NormalizePerimeterDirection();
 
         float realHeight = levels * storyHeight;
 
-        List<Vector3> closedPerimeter = new();
+        List<Vector3> perimeter = new();
         List<Vector3> roofPolygon = new();
 
         // getting mesh vertices
-        foreach (Node node in perimeter)
+        foreach (Node node in this.perimeter)
         {
             Vector3 point = node.GetPointWithOffset(origin) - this.buildingCenter;
+            perimeter.Add(point);
+
             Vector3 roofPoint = point + realHeight * Vector3.up;
-            closedPerimeter.Add(point);
             roofPolygon.Add(roofPoint);
         }
 
-        Vector3 startPoint = perimeter[0].GetPointWithOffset(origin) - this.buildingCenter;
-        closedPerimeter.Add(startPoint);
-        roofPolygon.Add(startPoint + realHeight * Vector3.up);
 
         // constructing mesh
         mesh.Clear();
@@ -148,17 +145,17 @@ public class Building
 
         int vertexCount = 0;
 
-        for (int index = 0; index < closedPerimeter.Count - 1; index++)
+        for (int index = 0; index < perimeter.Count - 1; index++)
         {
-            Vector3 a = closedPerimeter[index];
-            Vector3 au = closedPerimeter[index] + realHeight * Vector3.up;
-            Vector3 b = closedPerimeter[index + 1];
-            Vector3 bu = closedPerimeter[index + 1] + realHeight * Vector3.up;
+            Vector3[] quad = {
+            perimeter[index],
+            perimeter[index + 1],
+            perimeter[index] + realHeight * Vector3.up,
+            perimeter[index + 1] + realHeight * Vector3.up,
+            };
 
-            vertices.Add(a);
-            vertices.Add(b);
-            vertices.Add(au);
-            vertices.Add(bu);
+            foreach (Vector3 vertex in quad)
+                vertices.Add(vertex);
 
             foreach (int indexOffset in quarOrder)
                 indices.Add(vertexCount + indexOffset);
@@ -168,7 +165,7 @@ public class Building
 
         // roof polygon triangulation
         int i = -1;
-        int limit = 100; // in case something goes terribly wrong
+        int limit = 2500; // in case something goes terribly wrong
         while (roofPolygon.Count > 2 && limit > 0)
         {
             i++;

@@ -52,6 +52,23 @@ public class CacheProcessor
             Building building = new(buildingStruct, globalMapData, mapSettings);
             globalMapData.buildings.Add(buildingStruct.buildingID, building);
         }
+
+        // injecting buildings
+        foreach (RoadStruct roadStruct in chunkStruct.roads.Values)
+        {
+            if (roadStruct.roadType == RoadType.road)
+                continue;
+                
+            if (globalMapData.roads.ContainsKey(roadStruct.roadID))
+                continue;
+            
+            Road road = new(roadStruct, globalMapData, mapSettings);
+            globalMapData.roads.Add(roadStruct.roadID, road);
+        }
+       
+        foreach (Road road in globalMapData.roads.Values)
+            if (road.type != RoadType.road)
+                road.UpdateMesh();
     }
 
     public static HashSet<int> GetCachedChunks()

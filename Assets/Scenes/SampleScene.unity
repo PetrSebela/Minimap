@@ -152,13 +152,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4bf146fc4a0843e0b5918aa99996a1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapFilePath: map.xml
+  nodeTags:
+  - {fileID: 11400000, guid: d469169ea3db291ebb08ffac15fa56a1, type: 2}
+  roadTags:
+  - {fileID: 11400000, guid: 17efe0ee1522e7e20a748ace8221a109, type: 2}
+  - {fileID: 11400000, guid: 6418da911f234e257830f0e82ba7ce4a, type: 2}
+  - {fileID: 11400000, guid: 1f36d19a8bf88e8339b5cc416e5c632c, type: 2}
+  - {fileID: 11400000, guid: ecd8ec7171298e406a3ae59de6657aa5, type: 2}
+  - {fileID: 11400000, guid: d148f2418c9ac76eebb3d00cda6924b3, type: 2}
+  billboardTarget: {fileID: 330585546}
   material: {fileID: 2100000, guid: ed18efe0f3339439c854736099d201c5, type: 2}
+  loadFromAPI: 0
   worldOriginCoordinates:
     latitude: 49.2264482
     longitude: 16.5953301
-  tag: {fileID: 2025944824315695006, guid: 309019dfd26ff25989985789fff1dfed, type: 3}
-  billboardTransform: {fileID: 330585546}
 --- !u!4 &21682704
 Transform:
   m_ObjectHideFlags: 0
@@ -596,7 +603,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1182929565}
   - component: {fileID: 1182929566}
-  - component: {fileID: 1182929567}
   m_Layer: 0
   m_Name: Camera Holder
   m_TagString: Untagged
@@ -635,24 +641,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraHolder: {fileID: 1182929565}
   tiltAxis: {fileID: 2058801475}
-  camera: {fileID: 330585546}
---- !u!114 &1182929567
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1182929564}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: e1a93e220345cb67aaf058d1ea7d6ba8, type: 2}
+  cameraTransform: {fileID: 330585546}
 --- !u!1 &2058801474
 GameObject:
   m_ObjectHideFlags: 0

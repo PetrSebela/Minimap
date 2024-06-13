@@ -6,60 +6,68 @@ using System.Collections;
 
 public class MapController : MonoBehaviour
 {
-    [SerializeField] private string mapFilePath;
-    public Material material;
 
     // map data
     Dictionary<long, Node> nodes = new();
     Dictionary<long, Building> buildings = new();
     Dictionary<long, Road> roads = new();
     Dictionary<Vector3, Chunk> chunkDictionary = new();
+    GlobalMapData globalMapData;
 
 
-    Vector3 worldOrigin;
+    [Header("Map settings")]
+    public Tag[] nodeTags;
+    public RoadTag[] roadTags;
+    public Transform billboardTarget;
+    public Material material;
+    public bool loadFromAPI;
+
+
+
 
     // Tree at VUT FIT
     // latitude = 49.2264482;
     // longitude = 16.5953301;
-    [SerializeField] Coordinates worldOriginCoordinates;
-
-
-
-
-    // map settings
     MapSettings mapSettings;
-    GlobalMapData globalMapData;
+
+    [SerializeField] Coordinates worldOriginCoordinates;
+    Vector3 worldOrigin;
+
 
 
     // Dynamic map loading 
     const float chunkSize = 250.0f; //! clear cashe if you change this number
     const int chunksInArea = 15;
-    Queue<string> xmlMapDataQueue = new();
-
     float areaSize;
+
+    // API variables
     XmlProcessor xmlProcessor;
     CacheProcessor cacheProcessor;
+    Queue<string> xmlMapDataQueue = new();
+
     
-    //! test
-    public GameObject tag;
-    public Transform billboardTransform;
     void Start()
     {
         worldOrigin = Geo.SphericalToCartesian(worldOriginCoordinates.latitude, worldOriginCoordinates.longitude);
 
-        mapSettings = new(worldOrigin, material, chunkSize, chunksInArea, tag, billboardTransform);
+        mapSettings = new(worldOrigin, material, chunkSize, chunksInArea, nodeTags, billboardTarget, roadTags);
         globalMapData = new(nodes, buildings, roads, chunkDictionary);
         areaSize = chunksInArea * chunkSize;
         xmlProcessor = new(globalMapData, mapSettings);
         cacheProcessor = new(globalMapData, mapSettings);
 
-        // load chunks from cache
-        cacheProcessor.LoadAllCachedChunks();
 
-        // load area from API 
-        // AreaData loaderData = new(worldOrigin - new Vector3(areaSize / 2, 0, areaSize / 2), areaSize, xmlMapDataQueue);
-        // ThreadPool.QueueUserWorkItem(ChunkLoader.AreaLoader, loaderData);
-
+        if (loadFromAPI)
+        {
+            // load area from API 
+            AreaData loaderData = new(worldOrigin - new Vector3(areaSize / 2, 0, areaSize / 2), areaSize, xmlMapDataQueue);
+            ThreadPool.QueueUserWorkItem(ChunkLoader.AreaLoader, loaderData);
+        }
+        else
+        {
+            // load chunks from cache
+            cacheProcessor.LoadAllCachedChunks();
+        }
     }
 
     void FixedUpdate()
@@ -70,8 +78,9 @@ public class MapController : MonoBehaviour
     void OnDrawGizmos()
     {
         Gizmos.color = Color.white;
-        foreach (Chunk chunk in chunkDictionary.Values)
-            chunk.DrawGizmos();
+
+        foreach (Road road in roads.Values)
+            road.DrawGizmo();
 
         foreach (Node node in nodes.Values)
             node.DrawGizmo();
@@ -79,11 +88,10 @@ public class MapController : MonoBehaviour
 
     public void ProcessXmlMapData()
     {
-
         string mapData;
         lock (xmlMapDataQueue)
         {
-            if(xmlMapDataQueue.Count <= 0)
+            if (xmlMapDataQueue.Count <= 0)
                 return;
             mapData = xmlMapDataQueue.Dequeue();
         }
@@ -103,17 +111,19 @@ public struct MapSettings
     public Material buildingMaterial;
     public float chunkSize;
     public int chunksInArea;
-    public GameObject tag;
-    public Transform billboardTransform;
+    public Tag[] tags;
+    public Transform billboardTarget;
+    public RoadTag[] roadTags;
 
-    public MapSettings(Vector3 worldOrigin, Material buildingMaterial, float chunkSize, int chunksInArea, GameObject tag, Transform billboardTransform)
+    public MapSettings(Vector3 worldOrigin, Material buildingMaterial, float chunkSize, int chunksInArea, Tag[] tags, Transform billboardTarget, RoadTag[] roadTags)
     {
         this.worldOrigin = worldOrigin;
         this.buildingMaterial = buildingMaterial;
         this.chunkSize = chunkSize;
         this.chunksInArea = chunksInArea;
-        this.tag = tag;
-        this.billboardTransform = billboardTransform;
+        this.tags = tags;
+        this.billboardTarget = billboardTarget;
+        this.roadTags = roadTags;
     }
 }
 

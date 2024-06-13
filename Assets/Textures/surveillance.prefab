@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 15292402375190301}
   - component: {fileID: 1398372427662206364}
   m_Layer: 3
-  m_Name: Target
+  m_Name: surveillance
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

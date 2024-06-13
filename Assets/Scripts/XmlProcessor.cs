@@ -32,6 +32,7 @@ public class XmlProcessor
 
         yield return null;
         List<BuildingStruct> areaBuildings = LoadBuildings(root, nsd); 
+        List<RoadStruct> roadStructs = GetRoads(root, nsd);
         
         // move all code above onto separate thread
         
@@ -68,6 +69,22 @@ public class XmlProcessor
                 yield return null;
         }
 
+        foreach (RoadStruct rs in roadStructs)
+        {
+            if (globalMapData.roads.ContainsKey(rs.roadID))
+                continue;
+            
+            Road road = new(rs, globalMapData, mapSettings);
+            globalMapData.roads.Add(rs.roadID, road);
+            effectedChunks.Add(road.GetParentChunk());
+
+            breakCounter++;
+            if (breakCounter % 100 == 0)
+                yield return null;
+        }
+
+
+
 
         foreach (Chunk chunk in effectedChunks)
             chunk.Serialize();
@@ -94,27 +111,74 @@ public class XmlProcessor
         return nodeStructs;
     }
 
+    private List<NodeStruct> GetRoadNodes(XmlNode root, Dictionary<long, NodeStruct> nsd)
+    {
+        List<NodeStruct> nodes = new();
+
+        XmlNodeList perimeterNodes = root.SelectNodes("descendant::nd");
+        
+        foreach (XmlNode perimeterNode in perimeterNodes)
+        {
+            long perimeterNodeId = Convert.ToInt64(perimeterNode.Attributes.GetNamedItem("ref").Value);
+            NodeStruct ns = nsd[perimeterNodeId];
+            nodes.Add(ns);
+        }
+
+        return nodes;
+    }
+
+    private RoadType GetRoadType(XmlNode root)
+    {
+        RoadType type = RoadType.road;
+
+        foreach (RoadTag roadTag in mapSettings.roadTags)
+        {
+            if (null != root.SelectSingleNode(roadTag.xPath))
+                type = roadTag.roadType;        
+        }
+
+        return type;
+    }
+
+    private float GetRoadLanes(XmlNode root)
+    {
+        XmlNode laneNode = root.SelectSingleNode("descendant::tag[@k='lanes']");
+        if (laneNode == null)
+            return 1.0f;
+
+        if(int.TryParse(laneNode.Attributes.GetNamedItem("v").Value, out int lanes))
+            return lanes;
+
+        return 1.0f;
+    }
+
+    private List<RoadStruct> GetRoads(XmlNode root, Dictionary<long, NodeStruct> nsd)
+    {
+        List<RoadStruct> roadStructs = new();
+        XmlNodeList nodeList = root.SelectNodes("descendant::way[tag[@k='highway']]");
+
+        foreach (XmlNode node in nodeList)
+        {
+            long id = Convert.ToInt64(node.Attributes.GetNamedItem("id").Value);
+            List<NodeStruct> nodes = GetRoadNodes(node, nsd);
+            float lanes = GetRoadLanes(node);
+            RoadType type = GetRoadType(node);
+            RoadStruct rs = new(id, nodes, lanes, type);
+            roadStructs.Add(rs);
+        }
+        return roadStructs;
+    }
+
     private NodeType GetNodeType(XmlNode root)
     {
         NodeType nodeType = NodeType.Generic;
 
-        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='surveillance']"))
-            nodeType = NodeType.Surveillance;
-        
-        if (null != root.SelectSingleNode("descendant::tag[@k='highway' and @v='street_lamp']"))
-            nodeType = NodeType.Lamp;
+        foreach (Tag tag in mapSettings.tags)
+        {
+            if (null != root.SelectSingleNode(tag.localXpath))
+                nodeType = tag.nodeType;
+        }
 
-        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='chimney']"))
-            nodeType = NodeType.Chimney;
-
-        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='cooling_tower']"))
-            nodeType = NodeType.CoolingTower;
-        
-        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='communications_tower']"))
-            nodeType = NodeType.CommunicationsTower;
-        
-        if (null != root.SelectSingleNode("descendant::tag[@k='man_made' and @v='antenna']"))
-            nodeType = NodeType.Antenna;
         return nodeType;
     }
 
